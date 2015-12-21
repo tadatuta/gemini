@@ -1,0 +1,267 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf8">
+    <title>Configuration / gemini</title>
+    <meta name="description" content="Utility for regression testing of web pages using screenshots">
+    <style>
+        html {
+            font-family: sans-serif;
+            line-height: 1.5;
+        }
+
+        .page {
+            padding: 40px 20%;
+        }
+
+        .nav {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav__item {
+            display: inline-block;
+            margin-right: 7px;
+        }
+    </style>
+</head>
+<body class="page">
+    <h1>♊︎</h1>
+    <ul class="nav">
+        <li class="nav__item"><a href="../index.html" class="link">Quick start</a></li>
+<li class="nav__item"><a href="configuration.html" class="link">Configuration</a></li>
+<li class="nav__item"><a href="testing.html" class="link">Writing Gemini tests</a></li>
+<li class="nav__item"><a href="commands.html" class="link">Commands</a></li>
+<li class="nav__item"><a href="api.html" class="link">Programmatic API</a></li>
+<li class="nav__item"><a href="plugins.html" class="link">Writing plugins</a></li>
+    </ul>
+    <h1 id="gemini-configuration">Gemini configuration</h1>
+<p><strong>Gemini</strong> is configured using <code>.gemini.yml</code> file at the root of the project.</p>
+<p>Complete example with all available settings looks like this, but you&#39;ll need
+to specify only a few settings specific for your project:</p>
+<pre><code class="lang-yaml">rootUrl: https://example.com/root
+gridUrl: http://webdriber.example.com
+desiredCapabilities:
+  commonThing: value
+calibrate: false
+tolerance: 3.5
+httpTimeout: 5000
+screenshotsDir: &#39;./screens&#39;
+windowSize: 1600x1080
+sessionsPerBrowser: 2
+suitesPerSession: 100
+
+browsers:
+  chrome-latest:
+    desiredCapabilities:
+      version: &quot;37.0&quot;
+      browserName: chrome
+      platform: LINUX
+
+  firefox-latest:
+    rootUrl: https://example.com/special-for-ff
+    screenshotsDir: &#39;./ff-screens&#39;
+    calibrate: true
+    desiredCapabilities:
+      version: &quot;31.0&quot;
+      browserName: firefox
+      platform: LINUX
+
+sets:
+  ff:
+    files:
+     - gemini/ff
+    browsers:
+     - firefox-latest
+  chrome:
+    files:
+     - gemini/chrome
+    browsers:
+     - chrome-latest
+
+system:
+  projectRoot: ../project
+  sourceRoot: ../project/src
+  plugins:
+    teamcity: true
+  debug: true
+  parallelLimit: 3
+  diffColor: &#39;#ff0000&#39;
+  coverage:
+    enabled: true
+    exclude:
+     - libs/**
+     - &quot;*.blocks/**/*.tests/blocks/**&quot;
+     - &quot;*.blocks/**/*.tests/*.blocks/**&quot;
+    html: false
+</code></pre>
+<h2 id="system-settings">System settings</h2>
+<p>There is a <code>system</code> section in the config file, which contains global <code>gemini</code>
+settings. These settings can not be set per-browser.</p>
+<ul>
+<li><p><code>projectRoot</code> – root directory of a project. All relative paths in config or
+options will be resolved relatively to it. By default it is the directory
+config file is placed in.</p>
+</li>
+<li><p><code>sourceRoot</code> – directory which contains the source files.  Local sources
+will be used in the coverage report when the source map is available, but
+the sources can not be downloaded via URLs from the test pages. By default,
+it is equal to <code>projectRoot</code>.</p>
+</li>
+<li><p><code>plugins</code> - list of plugins to enable. Should have form of <code>pluginName:
+settings</code>.  For example:</p>
+<pre><code class="lang-yaml">plugins:
+  teamcity: true
+  saucelabs:
+    username: user
+    password: pass
+</code></pre>
+<p>Each plugin should be an installed npm package named <code>gemini-&lt;pluginName&gt;</code>.</p>
+</li>
+<li><p><code>debug</code> – turn on debug logging to the terminal.</p>
+</li>
+<li><p><code>parallelLimit</code> – by default, <code>gemini</code> will run all browsers simultaneously.
+Sometimes (i.e. when using cloud services, such as SauceLabs) you have
+a limit of a number of browser that can be run once at a time. Use this
+option to limit the number of browsers that <code>gemini</code> will try to run in
+parallel.</p>
+</li>
+<li><p><code>diffColor</code> – specifies color which will be used to highlight differences
+between images. Specified in hexadecimal RGB (<code>#RRGGBB</code>). Magenta by default
+(<code>#FF00FF</code>).</p>
+</li>
+<li><p><code>coverage</code> - <code>gemini</code> can gather and report CSS tests coverage. It supports
+source maps, so you can get the report even if you are using preprocessor or
+minifier. The JSON and html reports are saved to <code>gemini-coverage</code>
+directory. There are many settings under this section:</p>
+<ul>
+<li><p><code>enabled</code> – set to <code>true</code> to enable coverage reporting.</p>
+</li>
+<li><p><code>exclude</code> – array of file paths or glob patterns to exclude from coverage
+report. For example:</p>
+<pre><code class="lang-yaml">  system:
+    coverage:
+      exclude:
+        - libs/**
+        - path/to/some.css
+        -
+</code></pre>
+</li>
+<li><p><code>html</code> - set to false to disable html report and save only JSON.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="browsers-settings">Browsers settings</h2>
+<p>These settings specify the configuration of each browser used for tests. Each
+setting can be specified in two ways:</p>
+<ol>
+<li>At the top level of a config file. This way it affects all browsers.</li>
+<li>Inside the <code>browsers</code> section. This way it will affect only one browser and
+override top level value.</li>
+</ol>
+<p>Format of the browsers section:</p>
+<pre><code class="lang-yaml">  browsers:
+    &lt;browser-id&gt;:
+      &lt;setting&gt;: &lt;value&gt;
+      &lt;setting&gt;: &lt;value&gt;
+</code></pre>
+<p><code>&lt;browser-id&gt;</code> value is used for browser identification in test reports and
+for constructing screens file names.</p>
+<p>Settings list:</p>
+<ul>
+<li><p><code>rootUrl</code> (required) – the root URL of your website. Target URLs of your
+test suites will be resolved relatively to it.</p>
+</li>
+<li><p><code>desiredCapabilities</code> (required) - WebDriver
+<a href="https://github.com/SeleniumHQ/selenium/wiki/DesiredCapabilities">DesiredCapabilites</a>
+for the browser. Per-browser value will be merged with top-level value
+instead of overriding it.</p>
+</li>
+<li><p><code>gridUrl</code> – WebDriver URL to use for taking screenshots. By default is
+<a href="http://localhost:4444/wd/hub">http://localhost:4444/wd/hub</a></p>
+</li>
+<li><p><code>calibrate</code> - does this browser need to perform the calibration procedure.
+This procedure allows to correctly capture the image in case the particular
+WebDriver implementation captures browser UI along with web page. Enabled by
+default. If you are sure this is not the case for your WebDriver, you can
+disable it by setting this option to <code>false</code>.</p>
+</li>
+<li><p><code>httpTimeout</code> - timeout for HTTP requests to WebDriver, milliseconds. By
+default the server timeout is used.</p>
+</li>
+<li><p><code>screenshotsDir</code> – directory to save reference screenshots to.
+<code>&lt;projectRoot&gt;/gemini/screens</code> by default.</p>
+</li>
+<li><p><code>tolerance</code> - indicates maximum allowed
+<a href="http://en.wikipedia.org/wiki/Color_difference#CIEDE2000">CIEDE2000</a>
+difference between colors. Used only in non-strict mode. By default it&#39;s 2.3
+which should be enough for the most cases. Increasing global default is not
+recommended, prefer changing tolerance for particular suites or states
+instead.</p>
+</li>
+<li><p><code>windowSize</code> – specify browser window dimensions (i.e. <code>1600x1200</code>). If not
+specified, the size of the window depends on WebDriver.</p>
+</li>
+<li><p><code>sessionPerBrowser</code> - how many WebDriver sessions  can be launched
+simultaneously for this browser. Default is 1. Increase the value if you
+want to speed up your tests.</p>
+</li>
+<li><p><code>suitesPerSession</code> - maximum amount of test suites to run in each web driver
+session. After limit is reached, session gets closed and new session gets
+started. By default is <code>.inf</code> (no limit). Set to smaller number if you are
+experiencing stability problems.</p>
+</li>
+<li><p><code>retry</code> – maximum amount of relaunch fallen tests with a critical error. If not
+specified, the fallen tests will not be relaunched (by default it&#39;s 0).</p>
+</li>
+</ul>
+<h2 id="sets">Sets</h2>
+<p>You can link some set of tests with certain browsers using <code>sets</code>.</p>
+<p>Format of the <code>sets</code> section:</p>
+<pre><code class="lang-yaml">sets:
+  &lt;set-name&gt;:
+    files:
+     - &lt;dir-with-test-files&gt;
+     ...
+    browsers:
+     - &lt;browser-id-to-test-in&gt;
+     ...
+</code></pre>
+<ul>
+<li><p><code>files</code> - list of test files or directories with test files. Should be relative to project root directory. <code>gemini</code> by default. Can be a string if you want to specify just one file or directory.</p>
+</li>
+<li><p><code>browsers</code> - list of browser ids to run tests specified in <code>files</code>. All browsers by default.</p>
+</li>
+</ul>
+<p>If no sets specified then default set named <code>all</code> with all defaults will be created.</p>
+<h2 id="overriding-settings">Overriding settings</h2>
+<p>All options can also be overridden via command-line flags or environment
+variables. Priorities are the following:</p>
+<ul>
+<li><p>command-line option has the highest priority. It overrides environment
+variable and config file value.</p>
+</li>
+<li><p>environment variable has second priority. It overrides config file value.</p>
+</li>
+<li><p>config file value has the lowest priority.</p>
+</li>
+<li><p>if no command-line option, environment variable or config file option
+specified, default is used.</p>
+</li>
+</ul>
+<p>To override config setting with CLI option, convert full option path to
+<code>--kebab-case</code>. For example, if you want to run tests against different root
+URL, call:</p>
+<pre><code>gemini test --root-url http://example.com
+</code></pre><p>To save screenshots for IE9 to different location (considering you have
+browser with <code>ie9</code> id in the config):</p>
+<pre><code>gemini gather --browsers-ie9-screenshots-dir ./ie9-screens
+</code></pre><p>To override setting with environment variable, convert its full path to
+<code>snake_case</code> and add <code>gemini_</code> prefix. Above examples can be rewritten to use
+environment variables instead of CLI options:</p>
+<pre><code>gemini_root_url=http://example.com gemini test
+gemini_browsers_ie9_screenshots_dir=./ie9-screens gemini gather
+</code></pre>
+</body>
+</html>

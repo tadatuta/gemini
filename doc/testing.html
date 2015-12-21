@@ -1,0 +1,309 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf8">
+    <title>Writing Gemini tests / gemini</title>
+    <meta name="description" content="Utility for regression testing of web pages using screenshots">
+    <style>
+        html {
+            font-family: sans-serif;
+            line-height: 1.5;
+        }
+
+        .page {
+            padding: 40px 20%;
+        }
+
+        .nav {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav__item {
+            display: inline-block;
+            margin-right: 7px;
+        }
+    </style>
+</head>
+<body class="page">
+    <h1>♊︎</h1>
+    <ul class="nav">
+        <li class="nav__item"><a href="../index.html" class="link">Quick start</a></li>
+<li class="nav__item"><a href="configuration.html" class="link">Configuration</a></li>
+<li class="nav__item"><a href="testing.html" class="link">Writing Gemini tests</a></li>
+<li class="nav__item"><a href="commands.html" class="link">Commands</a></li>
+<li class="nav__item"><a href="api.html" class="link">Programmatic API</a></li>
+<li class="nav__item"><a href="plugins.html" class="link">Writing plugins</a></li>
+    </ul>
+    <h1 id="writing-gemini-tests">Writing Gemini tests</h1>
+<p>For each block of website that will be tested you need to write one or more
+<em>test suites</em>. Suite consists of few <em>states</em> that need to be verified. For
+each state you need to specify <em>action sequence</em> that gets block to this
+state.</p>
+<h2 id="defining-suites">Defining suites</h2>
+<p>Test suite is defined with <code>gemini.suite</code> method.</p>
+<p><strong>Example</strong>:</p>
+<pre><code class="lang-js">var gemini = require(&#39;gemini&#39;);
+
+gemini.suite(&#39;button&#39;, function(suite) {
+    suite
+        .setUrl(&#39;/path/to/page&#39;)
+        .setCaptureElements(&#39;.button&#39;)
+        .before(function(actions, find) {
+            this.button = find(&#39;.buttons&#39;);
+        })
+        .capture(&#39;plain&#39;)
+        .capture(&#39;hovered&#39;, function(actions, find) {
+            actions.mouseMove(this.button);
+        })
+        .capture(&#39;pressed&#39;, function(actions, find) {
+            actions.mouseDown(this.button);
+        })
+        .capture(&#39;clicked&#39;, function(actions, find) {
+            actions.mouseUp(this.button);
+        });
+});
+</code></pre>
+<p>Arguments of a <code>gemini.suite</code>:</p>
+<ul>
+<li><p><code>name</code> – the name of the new test suite. Name is displayed in reports and
+affects screenshots filenames.</p>
+</li>
+<li><p><code>callback(suite)</code> – callback, used to set up the suite. Receives a suite
+builder instance (described below).</p>
+</li>
+</ul>
+<h2 id="suite-builder-methods">Suite builder methods</h2>
+<p>All methods are chainable:</p>
+<ul>
+<li><p><code>setUrl(url)</code> – specifies address of a web page to take screenshots from.
+URL is relative to <code>rootUrl</code> config field.</p>
+</li>
+<li><p><code>setCaptureElements(&#39;selector1&#39;, &#39;selector2&#39;, ...})</code> – specifies CSS
+selectors of the elements that will be used to determine a region of a web
+page to capture.</p>
+<p>Capture region is determined by minimum bounding rect for all
+of the elements plus their <code>box-shadow</code> size.</p>
+<p>Can also accept an array:</p>
+<pre><code class="lang-js">suite.setCaptureElements([&#39;.selector1&#39;, &#39;.selector2&#39;]);
+</code></pre>
+<p>All tests in a suite will fail if none of the elements will be found.</p>
+</li>
+<li><p><code>ignoreElements(&#39;selector1&#39;, &#39;selector2&#39;, ...)</code> - elements, matching
+specified selectors will be ignored when comparing images.</p>
+</li>
+<li><p><code>setTolerance(value)</code> - overrides global tolerance value for the whole suite
+(See <code>tolerance</code>option description in <a href="configuration.html">config</a> documentation
+for details).</p>
+</li>
+<li><p><code>skip([browser])</code> – skip all tests and nested suites for:</p>
+<ul>
+<li><p><code>skip()</code> – all browsers;</p>
+</li>
+<li><p><code>skip(&#39;id&#39;)</code> – browser with specified <code>id</code>;</p>
+</li>
+<li><p><code>skip(&#39;id&#39;, comment)</code> – browser with specified <code>id</code> and show <code>comment</code> in the report;</p>
+</li>
+<li><p><code>skip(/some RegExp/)</code> – browser with <code>id</code> which matches <code>/some RegExp/</code>;</p>
+</li>
+<li><p><code>skip(/some RegExp/, comment)</code> – browser with <code>id</code> which matches <code>/some RegExp/</code> and show <code>comment</code> in the report;</p>
+</li>
+<li><p><code>skip([&#39;id1&#39;, /RegExp1/, ...])</code> – multiple browsers;</p>
+</li>
+<li><p><code>skip([&#39;id1&#39;, /RegExp1/, ...], comment)</code> – multiple browsers and show <code>comment</code> in the report.</p>
+</li>
+</ul>
+<p>All browsers from subsequent calls to <code>.skip()</code> are added to the skip list:</p>
+<pre><code class="lang-js">suite
+    .skip(&#39;id1&#39;)
+    .skip(/RegExp1/);
+</code></pre>
+<p>is equivalent to</p>
+<pre><code class="lang-js">suite.skip([
+    &#39;id1&#39;,
+    /RegExp1/
+]);
+</code></pre>
+</li>
+<li><p><code>capture(stateName, [options], callback(actions, find))</code> – defines a new
+state to capture. Optional callback describes a sequence of actions to bring
+the page to this state, starting from a <strong>previous</strong> state of the suite.
+States are executed one after another in order of definition without browser
+reload in between.</p>
+<p>Callback accepts two arguments:</p>
+<ul>
+<li><p><code>actions</code> – chainable object that should be used to specify a series of
+actions to perform.</p>
+</li>
+<li><p><code>find(selector)</code> –  use this function to search for an element to act on.
+Search is lazy and actually will be performed the first time element is
+needed. Search will be performed once for each <code>find</code> call, so if you
+need to perform multiple actions on the same element, save the result to
+some variable:</p>
+<pre><code class="lang-js">.capture(&#39;name&#39;, function(actions, find) {
+    var button = find(&#39;.button&#39;);
+    actions.mouseDown(button)
+        .mouseUp(button);
+});
+</code></pre>
+<p>Options parameter allows you to override a <code>tolerance</code> value for one test:</p>
+<pre><code class="lang-js">.capture(&#39;name&#39;, {tolerance: 30}, function(actions, find) {
+
+});
+</code></pre>
+<p>See <code>tolerance</code>option description in <a href="configuration.html">config</a>
+documentation for details.</p>
+</li>
+</ul>
+</li>
+<li><p><code>before(callback(actions, find))</code> – use this function to execute some code
+before the first state. The arguments of a callback are the same as for
+<code>capture</code> callback. Context is shared between <code>before</code> callback and all of
+suite&#39;s state callbacks, so you can use this hook to lookup for an element
+only once for the whole suite:</p>
+<pre><code class="lang-js">suite
+    .before(function(actions, find) {
+        this.button = find(&#39;.buttons&#39;);
+    })
+    .capture(&#39;hovered&#39;, function(actions, find) {
+        actions.mouseMove(this.button);
+    })
+    .capture(&#39;pressed&#39;, function(actions, find) {
+        actions.mouseDown(this.button);
+    });
+</code></pre>
+</li>
+<li><p><code>after(callback(actions, find))</code> – use this function to execute some code
+after the last state. The arguments of a callback are the same as for
+<code>capture</code> and <code>before</code> callbacks and context is shared between all of them.</p>
+</li>
+</ul>
+<h2 id="nested-suites">Nested suites</h2>
+<p>Suites can be nested. In this case, inner suite inherits <code>url</code>,
+<code>captureElements</code> from outer. This properties can be overridden in inner
+suites without affecting the outer. Each new suite causes reload of the
+browser, even if URL was not changed.</p>
+<pre><code class="lang-js">var gemini = require(&#39;gemini&#39;);
+
+gemini.suite(&#39;parent&#39;, function(parent) {
+    parent.setUrl(&#39;/some/path&#39;)
+        .setCaptureElements(&#39;.selector1&#39;, &#39;.selector2&#39;);
+        .capture(&#39;state&#39;);
+
+    gemini.suite(&#39;first child&#39;, function(child) {
+        //this suite captures same elements on different pages
+        child.setUrl(&#39;/other/path&#39;)
+            .capture(&#39;other state&#39;);
+    });
+
+    gemini.suite(&#39;second child&#39;, function(child) {
+        //this suite captures different elements on the same page
+        child.setCaptureElements(&#39;.next-selector&#39;})
+            .capture(&#39;third state&#39;, function(actions, elements) {
+                // ...
+            })
+
+        gemini.suite(&#39;grandchild&#39;, function(grandchild) {
+            //child suites can have own childs
+            grandchild.capture(&#39;fourth state&#39;);
+
+        });
+    });
+
+    gemini.suite(&#39;third child&#39;, function(child) {
+        //this suite uses completely different URL and set of elements
+        child.setUrl(&#39;/some/another/path&#39;)
+            .setCaptureElements(&#39;.different-selector&#39;);
+            .capture(&#39;fifth state&#39;);
+    });
+});
+</code></pre>
+<h2 id="available-actions">Available actions</h2>
+<p>By calling methods of the <code>actions</code> argument of a callback you can program
+a series of steps to bring the block to desired state. All calls are chainable
+and next step is always executed after previous one has completed. In the
+following list <code>element</code> can be either CSS selector or result of a <code>find</code>
+call:</p>
+<ul>
+<li><p><code>click(element)</code> – mouse click at the center of the element.</p>
+</li>
+<li><p><code>doubleClick(element)</code> – mouse double click at the center of the element.</p>
+</li>
+<li><p><code>mouseDown(element, [button])</code> – press a mouse button at the center of the
+element. Possible button values are: 0 – left, 1 – middle, 2 – right. By
+default, left button is used.</p>
+</li>
+<li><p><code>mouseUp([element], [button])</code> – release previously pressed mouse button. If
+element is specified, move mouse to element and release then.</p>
+</li>
+<li><p><code>mouseMove(element, [offset])</code> – move mouse to the given element. Offset is
+specified relatively to the top left corner of the element. If not
+specified, mouse will be moved to the center of the element.</p>
+</li>
+<li><p><code>dragAndDrop(element, dragTo)</code> – drag <code>element</code> to other <code>dragTo</code> element.</p>
+</li>
+<li><p><code>flick(speed, swipe)</code> - flick starting anywhere on the screen using
+<code>speed.x</code> and <code>speed.y</code> speed.</p>
+</li>
+<li><p><code>flick(offsets, speed, element)</code> - flick element with starting point at its
+center by <code>offsets.x</code> and <code>offset.y</code> offsets.</p>
+</li>
+<li><p><code>executeJS(function(window))</code> – run specified function in a browser. The
+argument of a function is the browser&#39;s <code>window</code> object:</p>
+<pre><code class="lang-js">actions.executeJS(function(window) {
+    window.alert(&#39;Hello!&#39;);
+});
+</code></pre>
+<p> Note that function is executed in a browser context, so any references to
+ outer scope of callback won&#39;t work.</p>
+</li>
+<li><p><code>wait(milliseconds)</code> – wait for specified amount of time before next action.
+If it is the last action in sequence, delay the screenshot for this amount
+of time.</p>
+</li>
+<li><p><code>waitForElementToShow(selector, [timeout])</code> - waits until element, matched
+by <code>selector</code> will become visible. Fails if element does not appear after
+<code>timeout</code> milliseconds (1000 by default).</p>
+</li>
+<li><p><code>waitForElementToHide(selector, [timeout])</code> - waits until element, matched
+by <code>selector</code> will become invisible or will be completely removed from DOM.
+Fails if element still visible after <code>timeout</code> milliseconds (1000 by
+default).</p>
+</li>
+<li><p><code>waitForJSCondition(function(window), timeout)</code> - waits until specified
+function return <code>true</code>. Function will be executed in browser context, so any
+references to outer scope won&#39;t work. Fails if after <code>timeout</code> milliseconds
+function still returns <code>false</code> (1000 by default).</p>
+</li>
+<li><p><code>sendKeys([element], keys)</code> - send a series of keyboard strokes to the
+specified element or currently active element on a page.</p>
+<p> You can send a special key using one of the provided constants, i.e:</p>
+<pre><code class="lang-js"> actions.sendKeys(gemini.ARROW_DOWN);
+</code></pre>
+</li>
+</ul>
+<p>Full list of special keys (there are shortcuts for commonly used keys):</p>
+<p><code>NULL</code>, <code>CANCEL</code>, <code>HELP</code>, <code>BACK_SPACE</code>, <code>TAB</code>, <code>CLEAR</code>, <code>RETURN</code>, <code>ENTER</code>,
+<code>LEFT_SHIFT</code> ⇔ <code>SHIFT</code>, <code>LEFT_CONTROL</code> ⇔ <code>CONTROL</code>, <code>LEFT_ALT</code> ⇔ <code>ALT</code>,
+<code>PAUSE</code>, <code>ESCAPE</code>, <code>SPACE</code>, <code>PAGE_UP</code>, <code>PAGE_DOWN</code>, <code>END</code>, <code>HOME</code>,
+<code>ARROW_LEFT</code> ⇔ <code>LEFT</code>, <code>ARROW_UP</code> ⇔ <code>UP</code>, <code>ARROW_RIGHT</code> ⇔ <code>RIGHT</code>,
+<code>ARROW_DOWN</code> ⇔ <code>DOWN</code>, <code>INSERT</code>, <code>DELETE</code>, <code>SEMICOLON</code>, <code>EQUALS</code>, <code>NUMPAD0</code>,
+<code>NUMPAD1</code>, <code>NUMPAD2</code>, <code>NUMPAD3</code>, <code>NUMPAD4</code>, <code>NUMPAD5</code>, <code>NUMPAD6</code>, <code>NUMPAD7</code>,
+<code>NUMPAD8</code>, <code>NUMPAD9</code>, <code>MULTIPLY</code>, <code>ADD</code>, <code>SEPARATOR</code>, <code>SUBTRACT</code>, <code>DECIMAL</code>,
+<code>DIVIDE</code>, <code>F1</code>, <code>F2</code>, <code>F3</code>, <code>F4</code>, <code>F5</code>, <code>F6</code>, <code>F7</code>, <code>F8</code>, <code>F9</code>, <code>F10</code>, <code>F11</code>,
+<code>F12</code>, <code>COMMAND</code> ⇔ <code>META</code>, <code>ZENKAKU_HANKAKU</code>.</p>
+<ul>
+<li><p><code>sendFile(element, path)</code> – send file to the specified <code>input[type=file]</code>
+element. <code>path</code> must exist at local system (the one which <code>gemini</code> is
+executed on).</p>
+</li>
+<li><p><code>focus(element)</code> – set a focus to a specified element.</p>
+</li>
+<li><p><code>setWindowSize(width, height)</code> – change browser window dimensions.</p>
+</li>
+<li><p><code>tap(element)</code> - tap specified element on touch enabled device.</p>
+</li>
+</ul>
+
+</body>
+</html>

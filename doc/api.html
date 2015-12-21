@@ -1,0 +1,188 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf8">
+    <title>Programmatic API / gemini</title>
+    <meta name="description" content="Utility for regression testing of web pages using screenshots">
+    <style>
+        html {
+            font-family: sans-serif;
+            line-height: 1.5;
+        }
+
+        .page {
+            padding: 40px 20%;
+        }
+
+        .nav {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav__item {
+            display: inline-block;
+            margin-right: 7px;
+        }
+    </style>
+</head>
+<body class="page">
+    <h1>♊︎</h1>
+    <ul class="nav">
+        <li class="nav__item"><a href="../index.html" class="link">Quick start</a></li>
+<li class="nav__item"><a href="configuration.html" class="link">Configuration</a></li>
+<li class="nav__item"><a href="testing.html" class="link">Writing Gemini tests</a></li>
+<li class="nav__item"><a href="commands.html" class="link">Commands</a></li>
+<li class="nav__item"><a href="api.html" class="link">Programmatic API</a></li>
+<li class="nav__item"><a href="plugins.html" class="link">Writing plugins</a></li>
+    </ul>
+    <h1 id="programmatic-api-experimental-">Programmatic API (experimental)</h1>
+<p>With the help of <code>geminin/api</code> module you can use <strong>Gemini</strong> programmatically
+in your scripts or build tools plugins.</p>
+<p>First step is to create <strong>Gemini</strong> instance with a config:</p>
+<pre><code class="lang-javascript">var Gemini = require(&#39;gemini/api&#39;);
+
+var gemini = new Gemini({
+    projectRoot: &#39;/path/to/project&#39;,
+    gridUrl: &#39;http://example.com/grid&#39;
+    ...
+});
+</code></pre>
+<ul>
+<li><p><code>new Gemini(filePath)</code> will load config from YAML file at given paths;</p>
+</li>
+<li><p><code>new Gemini(options)</code> will create config from specified options (see config
+file reference). Options <strong>must</strong> have <code>projectRoot</code> setting specified.</p>
+</li>
+</ul>
+<h2 id="accessing-the-config-options">Accessing the config options</h2>
+<p>You can get values of options via <code>gemini.config</code> property:</p>
+<pre><code class="lang-javascript">var Gemini = require(&#39;gemini/api&#39;),
+    gemini = new Gemini(&#39;/path/to/config&#39;);
+
+console.log(gemini.config.rootUrl);
+</code></pre>
+<h2 id="reading-the-tests">Reading the tests</h2>
+<ul>
+<li><p><code>gemini.readTests(paths)</code> – read all of the tests from specified paths into
+one single meta-suite. <code>paths</code> is an array of files or directories paths
+containing Gemini tests. If not specified, will look for tests in
+<code>$projectRoot/gemini</code> directory. Returns promise which resolves to a single
+<code>Suite</code> object. All top level suites will be the children of this root
+suite.</p>
+<p>Here is the example that prints all top level suite names:</p>
+<pre><code class="lang-javascript">var Gemini = require(&#39;gemini/api&#39;),
+    gemini = new Gemini(&#39;/path/to/config&#39;);
+
+gemini.readTests()
+    .done(function(root) {
+        root.children.forEach(function(suite) {
+            console.log(suite.name);
+        });
+    });
+</code></pre>
+</li>
+</ul>
+<h3 id="suite">Suite</h3>
+<p>Suite objects have the following properties:</p>
+<ul>
+<li><p><code>id</code> – unique numeric identificator of the suite. Automatically generated
+when loading suites.</p>
+</li>
+<li><p><code>name</code> – the name of the suite.</p>
+</li>
+<li><p><code>children</code> – array of subsuites of the current suite.</p>
+</li>
+<li><p><code>states</code> – array of the <code>State</code> objects, defined in a suite.</p>
+</li>
+</ul>
+<h3 id="state">State</h3>
+<p>Suite objects have the following properties:</p>
+<ul>
+<li><code>name</code> – the name of the state.</li>
+</ul>
+<p>Methods:</p>
+<ul>
+<li><code>shouldSkip(browserId)</code> – returns <code>true</code> if this state should be skipped for
+a browser.</li>
+</ul>
+<h2 id="gathering-reference-screenshots">Gathering reference screenshots</h2>
+<p>Use <code>gemini.gather(paths, options)</code> method.</p>
+<p><code>paths</code> is the array of file paths or directories to run the suites from.</p>
+<p>Options:</p>
+<ul>
+<li><p><code>reporters</code> – array of reporters to use. Each element can be either string
+(to use corresponding built-in reporter) or reporter function (to use
+a custom reporter).</p>
+</li>
+<li><p><code>grep</code> – regular expression to filter suites to run. By default, all tests
+will be executed. If this option is set, only suites with name matching the
+pattern will be executed.</p>
+</li>
+<li><p><code>browsers</code> — array of browser ids to execute tests in. By default, tests are
+executed in all browsers, specified in config.</p>
+</li>
+</ul>
+<p>Returns promise that resolve to a stats object with following keys:</p>
+<ul>
+<li><p><code>total</code> – total number of tests executed.</p>
+</li>
+<li><p><code>skipped</code> – number of skipped tests.</p>
+</li>
+<li><p><code>errored</code> – number of errored tests.</p>
+</li>
+</ul>
+<p>Rejects promise if critical error occurred.</p>
+<h2 id="running-tests">Running tests</h2>
+<p>Use <code>gemini.test(paths, options)</code> method.</p>
+<p><code>paths</code> is the array of file paths or directories to run the tests from.</p>
+<p>Options:</p>
+<ul>
+<li><p><code>reporters</code> – array of reporter to use. Each element can be either string
+(to use corresponding built-in reporter) or reporter function (to use
+a custom reporter).</p>
+</li>
+<li><p><code>tempDir</code> – directory to save temporary images (current states) to. By
+default, new temp directory will be created.</p>
+</li>
+<li><p><code>grep</code> – regular expression to filter suites to run. By default, all tests
+will be executed. If this option is set, only suites with name matching the
+pattern will be executed.</p>
+</li>
+<li><p><code>browsers</code> — array of browser ids to execute tests in. By default, tests are
+executed in all browsers, specified in config.</p>
+</li>
+</ul>
+<p>Returns promise that resolve to a stats object with following keys:</p>
+<ul>
+<li><code>total</code> – total number of tests executed.</li>
+<li><code>skipped</code> – number of skipped tests.</li>
+<li><code>errored</code> – number of errored tests.</li>
+<li><code>passed</code> – number of passed tests.</li>
+<li><code>failed</code> – number of failed tests.</li>
+</ul>
+<p>Rejects promise if critical error occurred.</p>
+<h2 id="utilites">Utilites</h2>
+<ul>
+<li><p><code>gemini.getScreenshotPath(suite, stateName, browserId)</code> – returns path to
+the reference screenshot of the specified state for specified browser.</p>
+</li>
+<li><p><code>gemini.getBrowserCapabilites(browserId)</code> – returns WebDriver capabilities
+for specified <code>browserId</code>.</p>
+</li>
+<li><p><code>gemini.browserIds</code> – list of all browser identificators to use for tests.</p>
+</li>
+</ul>
+<h2 id="events">Events</h2>
+<p><code>gemini</code> instance emits some events, which can be used by external scripts or
+plugins:</p>
+<ul>
+<li><p><code>startRunner</code> - emitted before the start of <code>test</code> or <code>gather</code> command. If
+you return a promise from the event handler, the start of the command will
+be delayed until the promise resolves.</p>
+</li>
+<li><p><code>endRunner</code> - emitted after the end of the <code>test</code> or <code>gather</code> command.</p>
+</li>
+</ul>
+
+</body>
+</html>

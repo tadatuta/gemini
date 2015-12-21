@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf8">
+    <title>Writing plugins / gemini</title>
+    <meta name="description" content="Utility for regression testing of web pages using screenshots">
+    <style>
+        html {
+            font-family: sans-serif;
+            line-height: 1.5;
+        }
+
+        .page {
+            padding: 40px 20%;
+        }
+
+        .nav {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav__item {
+            display: inline-block;
+            margin-right: 7px;
+        }
+    </style>
+</head>
+<body class="page">
+    <h1>♊︎</h1>
+    <ul class="nav">
+        <li class="nav__item"><a href="../index.html" class="link">Quick start</a></li>
+<li class="nav__item"><a href="configuration.html" class="link">Configuration</a></li>
+<li class="nav__item"><a href="testing.html" class="link">Writing Gemini tests</a></li>
+<li class="nav__item"><a href="commands.html" class="link">Commands</a></li>
+<li class="nav__item"><a href="api.html" class="link">Programmatic API</a></li>
+<li class="nav__item"><a href="plugins.html" class="link">Writing plugins</a></li>
+    </ul>
+    <h1 id="writing-plugins">Writing plugins</h1>
+<p>Gemini plugin is just an npm package with a <code>gemini-&lt;plugin name&gt;</code> name.
+Module should export a single function which receives <code>Gemini</code> class instance
+and user-specified options. For example:</p>
+<pre><code class="lang-js">module.exports = function(gemini, options) {
+    console.log(&#39;Hello from plugin&#39;);
+};
+</code></pre>
+<p>Documentation on the <code>gemini</code> object can be found in <a href="api.html">programmatic
+API</a> document.</p>
+<p>Options are specified by a user in a config file and passed to the plugin as
+is. For example:</p>
+<p>.gemini.yml:</p>
+<pre><code class="lang-yaml">system:
+  plugins:
+    greeter:
+      name: Mr. Incredible
+</code></pre>
+<p>Plugin:</p>
+<pre><code class="lang-javascript">module.exports = function(gemini, options) {
+    console.log(&#39;Hello, %s&#39; options.name);
+};
+</code></pre>
+<p>When publishing plugins, add <code>gemini-plugin</code> keyword to your <code>package.json</code> to
+help users discovering it.</p>
+
+</body>
+</html>

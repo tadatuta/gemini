@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf8">
+    <title>Commands / gemini</title>
+    <meta name="description" content="Utility for regression testing of web pages using screenshots">
+    <style>
+        html {
+            font-family: sans-serif;
+            line-height: 1.5;
+        }
+
+        .page {
+            padding: 40px 20%;
+        }
+
+        .nav {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav__item {
+            display: inline-block;
+            margin-right: 7px;
+        }
+    </style>
+</head>
+<body class="page">
+    <h1>♊︎</h1>
+    <ul class="nav">
+        <li class="nav__item"><a href="../index.html" class="link">Quick start</a></li>
+<li class="nav__item"><a href="configuration.html" class="link">Configuration</a></li>
+<li class="nav__item"><a href="testing.html" class="link">Writing Gemini tests</a></li>
+<li class="nav__item"><a href="commands.html" class="link">Commands</a></li>
+<li class="nav__item"><a href="api.html" class="link">Programmatic API</a></li>
+<li class="nav__item"><a href="plugins.html" class="link">Writing plugins</a></li>
+    </ul>
+    <h1 id="gemini-commands">Gemini commands</h1>
+<p>You need <a href="http://www.seleniumhq.org/download/">Selenium-server</a> up and running
+if you want to run tests in real browsers.</p>
+<p>Without Selenium Server only <a href="http://phantomjs.org/">PhantomJS</a> browser can be
+used. In this case, run PhantomJS in webdriver mode before executing
+<strong>Gemini</strong>:</p>
+<pre><code>phantomjs --webdriver=4444
+</code></pre><h2 id="gathering-reference-images">Gathering reference images</h2>
+<p>Once you have few suites written you need to capture reference images:</p>
+<pre><code>gemini gather [paths to suites]
+</code></pre><p>If no paths are specified, each <code>.js</code> file from <code>gemini</code> directory will be
+processed. By default, configuration will be loaded from <code>.gemini.yml</code> in the
+current directory. To specify other config, use <code>--config</code> or <code>-c</code> option.</p>
+<h2 id="running-tests">Running tests</h2>
+<p>To compare you reference screenshots with current state of blocks, use:</p>
+<pre><code>gemini test [paths to suites]
+</code></pre><p>Paths and configuration are treated the same way as in <code>gather</code> command.</p>
+<p>Each state with appearance different from reference image will be treated as
+the failed test.</p>
+<p>By default, only names of the states are listed in shell. To get more
+information you can use HTML reporter:</p>
+<p><code>gemini test --reporter html [paths to suites]</code></p>
+<p>This will produce an HTML file in <code>gemini-report</code> directory. It will display
+reference image, current image and differences between them, for each state in
+each browser.</p>
+<p>Available reporters are:</p>
+<ul>
+<li><code>flat</code> (default console reporter);</li>
+<li><code>vflat</code> (verbose console reporter);</li>
+<li><code>html</code> for HTML report.</li>
+</ul>
+<p>You can also use multiple reporters at the same time using multiple
+<code>--reporter</code> options:</p>
+<pre><code>gemini test --reporter flat --reporter html
+</code></pre><h3 id="css-code-coverage-experimental-">CSS code coverage (experimental)</h3>
+<p>Path <code>--coverage</code> (or set <code>coverage</code> option in config file) to enable code
+coverage reporter. <strong>Gemini</strong> will examine your CSS files and report CSS rules
+that had been captured by at least one test completely (green color in
+report), partially (yellow) or was not captured at all (red).</p>
+<h2 id="common-cli-options">Common CLI options</h2>
+<ul>
+<li><p><code>--config</code>, <code>-c</code> – specify config file to use.</p>
+</li>
+<li><p><code>--grep PATTERN</code> – execute only suites with names that match the regular
+expression pattern.</p>
+</li>
+<li><p><code>--browser ID</code> — execute suite only for specified browser id. Can be used
+multiple times. Can be also specified with <code>GEMINI_BROWSERS</code> environment
+variable. If both CLI option and env variable are set, CLI has precedence.</p>
+</li>
+<li><p><code>--help</code> – display help message.</p>
+</li>
+<li><p><code>--version</code> – display version.</p>
+</li>
+</ul>
+<h2 id="overriding-config-options">Overriding config options</h2>
+<p>See <a href="configuration.html">config docs</a>;</p>
+<h2 id="shell-completion">Shell completion</h2>
+<p>To enable Tab-completion of the shell commands add <code>. &lt;(gemini completion)</code> to
+your shell rc-file ( for example <code>~/.bashrc</code> for <code>bash</code> or <code>~/.zshrc</code> for
+<code>zsh</code>).</p>
+
+</body>
+</html>

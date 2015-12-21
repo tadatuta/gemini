@@ -1,0 +1,227 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf8">
+    <title>Quick start / gemini</title>
+    <meta name="description" content="Utility for regression testing of web pages using screenshots">
+    <style>
+        html {
+            font-family: sans-serif;
+            line-height: 1.5;
+        }
+
+        .page {
+            padding: 40px 20%;
+        }
+
+        .nav {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav__item {
+            display: inline-block;
+            margin-right: 7px;
+        }
+    </style>
+</head>
+<body class="page">
+    <h1>♊︎</h1>
+    <ul class="nav">
+        <li class="nav__item"><a href="index.html" class="link">Quick start</a></li>
+<li class="nav__item"><a href="doc/configuration.html" class="link">Configuration</a></li>
+<li class="nav__item"><a href="doc/testing.html" class="link">Writing Gemini tests</a></li>
+<li class="nav__item"><a href="doc/commands.html" class="link">Commands</a></li>
+<li class="nav__item"><a href="doc/api.html" class="link">Programmatic API</a></li>
+<li class="nav__item"><a href="doc/plugins.html" class="link">Writing plugins</a></li>
+    </ul>
+    <h1 id="gemini-quick-start">Gemini quick start</h1>
+<p><a href="https://gitter.im/gemini-testing/gemini?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://badges.gitter.im/Join%20Chat.svg" alt="Join the chat at
+https://gitter.im/gemini-testing/gemini"></a></p>
+<p><a href="https://travis-ci.org/gemini-testing/gemini"><img src="https://travis-ci.org/gemini-testing/gemini.svg?branch=master" alt="Build
+Status"></a></p>
+<p><a href="https://coveralls.io/r/gemini-testing/gemini"><img src="https://img.shields.io/coveralls/gemini-testing/gemini.svg" alt="Coverage
+Status"></a></p>
+<p><a href="https://github.com/gemini-testing/gemini">Gemini</a> is the utility for regression
+testing of web pages appearance.</p>
+<p>Its key features are:</p>
+<ul>
+<li><p>Compatibility with different browsers:</p>
+<ul>
+<li>Google Chrome (tested in latest version)</li>
+<li>Mozilla Firefox (tested in latest version)</li>
+<li><a href="doc/ie-support.md">IE8+</a></li>
+<li>Opera 12+;</li>
+</ul>
+</li>
+<li><p>Ability to test separate sections of a web page;</p>
+</li>
+<li><p>Position and size of an element are calculated including its <code>box-shadow</code> and
+<code>outline</code> properties;</p>
+</li>
+<li><p>Some special case differences between images (rendering artifacts, text caret,
+etc.) are ignored;</p>
+</li>
+<li><p>CSS test coverage statistics.</p>
+</li>
+</ul>
+<p><strong>Gemini</strong> is created at <a href="http://www.yandex.com/">Yandex</a> and will be especially
+useful to UI libraries developers.</p>
+<p>Current document is a quick step-by-step guide that describes installation,
+configuration and usage of <strong>Gemini</strong>.</p>
+<h2 id="dependencies">Dependencies</h2>
+<p>Required software:</p>
+<ol>
+<li><p>WebDriver server implementation. There are few possible options: </p>
+<ul>
+<li><p><a href="http://docs.seleniumhq.org/download/">Selenium Server</a> – for testing in
+different browsers.</p>
+</li>
+<li><p><a href="https://sites.google.com/a/chromium.org/chromedriver/">ChromeDriver</a> - for
+testing in Google Chrome.</p>
+</li>
+<li><p><a href="http://phantomjs.org/">PhantomJS</a> — launch with <code>phantomjs
+--webdriver=4444</code> command.</p>
+</li>
+<li><p>Cloud WebDriver services, such as such as
+[SauceLabs] (<a href="http://saucelabs.com/">http://saucelabs.com/</a>) or
+<a href="http://www.browserstack.com/">BrowserStack</a></p>
+</li>
+</ul>
+</li>
+<li><p>Compiler with support of C++11 (<code>GCC@4.6</code> or higher). This is a
+<a href="https://github.com/gemini-testing/png-img">png-img</a> requirement.</p>
+</li>
+</ol>
+<h2 id="installation">Installation</h2>
+<h3 id="global-installation">Global installation</h3>
+<p>To install the utility use <a href="https://www.npmjs.org/">npm</a> command <code>install</code>:</p>
+<pre><code class="lang-sh">npm install -g gemini
+</code></pre>
+<p>Global installation is used for commands launch.</p>
+<h3 id="local-installation">Local installation</h3>
+<p>To write the tests you will also need local installation of <code>Gemini</code>. Run the
+following command in project directory:</p>
+<pre><code class="lang-sh">npm install gemini
+</code></pre>
+<h2 id="configuration">Configuration</h2>
+<p><strong>Gemini</strong> is configured using <code>.gemini.yml</code> file at the root of the project.
+Lets say we want to run our tests only in locally installed <code>PhantomJS</code>.</p>
+<p>In this case, the minimal configuration file will need to have only the root url
+of your web app and WebDriver capabilities of <code>PhantomJS</code>:
+For example,</p>
+<pre><code class="lang-yaml">rootUrl: http://yandex.com
+browsers:
+  PhantomJS:
+    desiredCapabilities:
+      browserName: phantomjs
+</code></pre>
+<p>Also, you need to run <code>PhantomJS</code> manually in a <code>WebDriver</code> mode:</p>
+<pre><code>phantomjs --webdriver=4444
+</code></pre><p>In case you are using remote WebDriver server, you can specify its URL with
+<code>gridUrl</code> option:</p>
+<pre><code class="lang-yaml">rootUrl: http://yandex.com
+gridUrl: http://selenium.example.com:4444/wd/hub
+
+browsers:
+  chrome:
+    desiredCapabilities:
+      browserName: chrome
+      version: &quot;45.0&quot;
+
+  firefox:
+    desiredCapabilities:
+      browserName: firefox
+      version: &quot;39.0&quot;
+</code></pre>
+<p>You can also set up each browser to have its own node:</p>
+<pre><code class="lang-yaml">rootUrl: http://yandex.com
+
+browsers:
+  gridUrl: http://chrome-node.example.com:4444/wd/hub
+  chrome:
+    desiredCapabilities:
+      browserName: chrome
+      version: &quot;45.0&quot;
+
+  firefox:
+    gridUrl: http://firefox-node.example.com:4444/wd/hub
+    desiredCapabilities:
+      browserName: firefox
+      version: &quot;39.0&quot;
+</code></pre>
+<h3 id="other-configuration-options">Other configuration options</h3>
+<p><a href="doc/configuration.html">See the details</a> of a config file structure and available
+options.</p>
+<h2 id="writing-tests">Writing tests</h2>
+<p>Each of the blocks that are being tested may be in one of the determined states.
+States are tested with the help of chains of step-by-step actions declared in
+test suites of a block.</p>
+<p>For example, let&#39;s write a test for a search block at
+<a href="http://www.yandex.com">yandex.com</a>:</p>
+<pre><code class="lang-javascript">var gemini = require(&#39;gemini&#39;);
+
+gemini.suite(&#39;yandex-search&#39;, function(suite) {
+    suite.setUrl(&#39;/&#39;)
+        .setCaptureElements(&#39;.main-table&#39;)
+        .capture(&#39;plain&#39;)
+        .capture(&#39;with text&#39;, function(actions, find) {
+            actions.sendKeys(find(&#39;.input__control&#39;), &#39;hello gemini&#39;);
+        });
+});
+</code></pre>
+<p>We create a new test suite <code>yandex-search</code> and assume that we will capture the
+<code>.main-table</code> element from a root URL <code>http://yandex.com</code>. We know that the
+block has two states:</p>
+<ul>
+<li><code>plain</code> – right after the page is loaded;</li>
+<li><code>with text</code> – with <code>hello gemini</code> text inserted into <code>.input__control</code>.</li>
+</ul>
+<p>States are executed one after another in order of definition without browser
+reload in between.</p>
+<p><a href="doc/testing.html">See the details</a> of tests creation methods.</p>
+<h2 id="using-cli">Using CLI</h2>
+<p>To complete the test creation procedure you need to take reference shots using
+the following command:</p>
+<pre><code>gemini gather [paths to test suites]
+</code></pre><p>For test launch (to compare current state of a block with a reference shot) use
+the command:</p>
+<pre><code>gemini test [paths to test suites]
+</code></pre><p>To see the difference between current state of a block and a reference picture
+more clearly, use HTML reporter:</p>
+<pre><code>gemini test --reporter html [paths to test suites]
+</code></pre><p>You can use both console and HTML reporters at the same time:</p>
+<pre><code>gemini test --reporter html --reporter flat [paths to test suites]
+</code></pre><p><a href="doc/commands.html">See the details</a> of interaction with CLI and available
+options.</p>
+<h2 id="gui">GUI</h2>
+<p>Instead of a command line you can use graphical user interface of <code>Gemini</code>. It
+is located in <a href="https://github.com/gemini-testing/gemini-gui">gemini-gui</a> package
+and must be installed additionally:</p>
+<pre><code>npm install -g gemini-gui
+</code></pre><p>GUI advantages:</p>
+<ul>
+<li><p>Handy reference shots preview;</p>
+</li>
+<li><p>Clear real-time demonstration of differences between a reference shot and
+current state of a block;</p>
+</li>
+<li><p>Easy update of reference shots.</p>
+</li>
+</ul>
+<h2 id="plugins">Plugins</h2>
+<p>Gemini can be extended with plugins. You could choose from the <a href="https://www.npmjs.com/browse/keyword/gemini-plugin">existing
+plugins</a> or <a href="doc/plugins.html">write your
+own</a>. To use the plugin, install and enable it in your
+<code>.gemini.yml</code>:</p>
+<pre><code class="lang-yaml">system:
+  plugins:
+    some-awesome-plugin:
+      plugin-option: value
+</code></pre>
+<h2 id="programmatic-api">Programmatic API</h2>
+<p>To use Gemini in your scripts or build tools you can use experimental
+<a href="doc/api.html">programmatic API</a>.</p>
+
+</body>
+</html>
